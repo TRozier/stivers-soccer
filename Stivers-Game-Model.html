@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stivers Soccer — Game Model</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f4f0;color:#1a1a1a;min-height:100vh}
+.screen{display:none;padding:1rem;max-width:480px;margin:0 auto}
+.screen.active{display:block}
+.header{background:#1a1a2e;color:#fff;padding:1.25rem;border-radius:12px;margin-bottom:1rem;text-align:center}
+.header h1{font-size:20px;font-weight:600;color:#fff}
+.header p{font-size:13px;color:rgba(255,255,255,0.7);margin-top:4px}
+.card{background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:12px;padding:1rem;margin-bottom:12px}
+.card h2{font-size:14px;font-weight:600;color:#1a1a2e;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px}
+.card p{font-size:14px;color:#444;line-height:1.6;margin-bottom:4px}
+.rule{background:#1a1a2e;color:#fff;border-radius:10px;padding:12px 14px;font-size:14px;font-style:italic;margin-top:8px;margin-bottom:16px;line-height:1.5}
+.btn{display:block;width:100%;padding:14px;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;text-align:center;margin-top:8px;border:none;transition:opacity 0.15s}
+.btn-primary{background:#1a1a2e;color:#fff}
+.btn-primary:hover{opacity:0.85}
+.btn-outline{background:#fff;color:#1a1a2e;border:1.5px solid #1a1a2e}
+.btn-outline:hover{background:#f4f4f0}
+.btn-danger{background:#E24B4A;color:#fff}
+.pos-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:1rem}
+.pos-btn{padding:14px 8px;border-radius:10px;border:1.5px solid #ddd;background:#fff;color:#1a1a2e;font-size:13px;font-weight:600;cursor:pointer;text-align:center;transition:all 0.15s}
+.pos-btn:hover{border-color:#1a1a2e}
+.pos-btn.selected{background:#1a1a2e;color:#fff;border-color:#1a1a2e}
+.progress-wrap{margin-bottom:1rem}
+.progress-bar{height:6px;background:#e0e0e0;border-radius:3px}
+.progress-fill{height:6px;background:#1a1a2e;border-radius:3px;transition:width 0.3s}
+.q-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.q-counter{font-size:13px;color:#666;font-weight:500}
+.q-timer{font-size:13px;font-weight:600;color:#1a1a2e}
+.q-text{font-size:16px;font-weight:600;color:#1a1a2e;margin-bottom:1.25rem;line-height:1.5}
+.opt{display:block;width:100%;text-align:left;padding:14px;border-radius:10px;border:1.5px solid #ddd;background:#fff;color:#1a1a2e;font-size:14px;cursor:pointer;margin-bottom:8px;transition:all 0.15s;line-height:1.4}
+.opt:hover:not(:disabled){border-color:#1a1a2e;background:#f8f8f8}
+.opt.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.opt.wrong{background:#FCEBEB;border-color:#E24B4A;color:#791F1F}
+.opt.reveal{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.fill-input{width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid #ddd;background:#fff;color:#1a1a2e;font-size:15px;margin-bottom:8px;outline:none}
+.fill-input:focus{border-color:#1a1a2e}
+.feedback{padding:12px 14px;border-radius:10px;font-size:14px;margin-bottom:8px;display:none;font-weight:500;line-height:1.5}
+.feedback.show{display:block}
+.feedback.correct{background:#E1F5EE;color:#085041}
+.feedback.wrong{background:#FCEBEB;color:#791F1F}
+.score-wrap{text-align:center;padding:1.5rem 0}
+.score-circle{width:140px;height:140px;border-radius:50%;background:#1a1a2e;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 1.25rem}
+.score-circle .pct{font-size:38px;font-weight:700;color:#fff}
+.score-circle .lbl{font-size:12px;color:rgba(255,255,255,0.7);margin-top:2px}
+.badge{display:inline-block;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:600;margin-bottom:1rem}
+.badge-gold{background:#FAEEDA;color:#633806}
+.badge-green{background:#E1F5EE;color:#085041}
+.badge-red{background:#FCEBEB;color:#791F1F}
+.consequence{background:#FCEBEB;border-radius:10px;padding:14px;margin:12px 0;border:1.5px solid #F09595}
+.consequence p{font-size:14px;color:#791F1F;font-weight:600;line-height:1.5}
+.result-breakdown{margin-top:1rem}
+.breakdown-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:0.5px solid #eee;font-size:14px}
+.breakdown-row:last-child{border-bottom:none}
+.correct-dot{color:#1D9E75;font-weight:700}
+.wrong-dot{color:#E24B4A;font-weight:700}
+.name-big{font-size:22px;font-weight:700;color:#1a1a2e;margin-bottom:4px}
+.home-logo{font-size:48px;text-align:center;margin-bottom:8px}
+.phase-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:6px;margin-top:12px}
+.tip{background:#f4f4f0;border-radius:8px;padding:10px 12px;font-size:13px;color:#555;margin-bottom:8px;line-height:1.5}
+</style>
+</head>
+<body>
+
+<div id="screen-home" class="screen active">
+  <div style="padding-top:1.5rem">
+    <div class="home-logo">⚽</div>
+    <div class="header">
+      <h1>Stivers Soccer</h1>
+      <p>Game Model Quiz — Know the system. Own your role.</p>
+    </div>
+    <div class="card">
+      <p style="font-size:14px;line-height:1.7;color:#444">Study the game model. Then take the quiz. Pass with <strong>75% or above</strong>. Fail and you owe Coach at the next session. No excuses.</p>
+    </div>
+    <button class="btn btn-primary" onclick="showScreen('screen-study')">📖 Study the game model</button>
+    <button class="btn btn-outline" style="margin-top:8px" onclick="goToName()">✅ I studied — take the quiz</button>
+  </div>
+</div>
+
+<div id="screen-study" class="screen">
+  <div class="header">
+    <h1>Game model</h1>
+    <p>Tap your position first. Then read them all.</p>
+  </div>
+  <div class="pos-grid" id="pos-grid"></div>
+  <div id="pos-detail"></div>
+  <button class="btn btn-primary" onclick="goToName()">Ready — take the quiz</button>
+  <button class="btn btn-outline" style="margin-top:8px;margin-bottom:2rem" onclick="showScreen('screen-home')">Back</button>
+</div>
+
+<div id="screen-name" class="screen">
+  <div style="padding-top:2rem">
+    <div class="header">
+      <h1>Who are you?</h1>
+      <p>Enter your name before the quiz starts.</p>
+    </div>
+    <div class="card">
+      <p style="font-size:14px;color:#444;margin-bottom:12px">Your name goes on the leaderboard. Make it count.</p>
+      <input class="fill-input" id="player-name" type="text" placeholder="First name Last name..." maxlength="30" />
+      <button class="btn btn-primary" onclick="confirmName()">Let's go →</button>
+    </div>
+    <button class="btn btn-outline" onclick="showScreen('screen-home')">Back</button>
+  </div>
+</div>
+
+<div id="screen-quiz" class="screen">
+  <div class="progress-wrap">
+    <div class="q-meta">
+      <span class="q-counter" id="q-counter">Question 1 of 20</span>
+      <span class="q-timer" id="q-timer"></span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  </div>
+  <div class="q-text" id="q-text"></div>
+  <div id="q-options"></div>
+  <div class="feedback" id="feedback"></div>
+  <button class="btn btn-primary" id="btn-next" style="display:none" onclick="nextQuestion()">Next →</button>
+</div>
+
+<div id="screen-result" class="screen">
+  <div class="header">
+    <h1>Your result</h1>
+    <p id="result-name-header"></p>
+  </div>
+  <div class="score-wrap">
+    <div class="score-circle">
+      <span class="pct" id="result-pct"></span>
+      <span class="lbl" id="result-fraction"></span>
+    </div>
+    <div id="result-badge"></div>
+    <div id="result-msg" class="card" style="text-align:left"></div>
+    <div id="consequence-box" class="consequence" style="display:none">
+      <p id="consequence-text"></p>
+    </div>
+    <div class="result-breakdown card" id="result-breakdown"></div>
+    <button class="btn btn-outline" style="margin-top:1rem" onclick="goToName()">Retake quiz</button>
+    <button class="btn btn-outline" style="margin-top:8px;margin-bottom:2rem" onclick="showScreen('screen-home')">Home</button>
+  </div>
+</div>
+
+<script>
+const POSITIONS = {
+  "Goalkeeper":{phases:[{label:"In possession",points:["Read the moment — short if available, long if pressed.","Distribute within 3 seconds. Hesitation invites the press.","The 9 at halfway is always your long outlet.","Quality over distance — a poor long ball resets nothing."]},{label:"Out of possession",points:["Sweeper keeper — claim everything in behind. Aggressively.","50/50 between you and the striker — you go. Every time. No hesitation.","You are the voice. Call the line. Call the runner. Be loud and specific.","Positioning is the first save — be in the right place before the shot comes.","Near post is locked. Force the shooter to beat you far post."]},{label:"A to D transition",points:["Communicate the shape immediately when possession is lost.","Cover in behind — be ready if the press and recovery both fail.","Reset the shape after every defensive moment — loud and clear."]},{label:"D to A transition",points:["Distribute immediately — read the moment, short or long.","Support the shape from behind — communicate what you see."]}],rule:"Be the voice, sweep the space, read the moment."},
+  "Centerback":{phases:[{label:"In possession",points:["Ball on your side — you are the Stopper. Step to the threat, win the duel.","Ball away from you — you are the Sweeper. Drop half a step, watch the space.","Ball central — strong side steps, weak side drops.","Roles switch the moment the ball switches sides — immediately.","Do NOT chase in behind as the Stopper — trust your partner."]},{label:"Out of possession",points:["Step aggressively when striker receives with back to goal — be proactive.","Hold a medium line — not too high, not too deep.","Never both CBs stepping at the same time — that is the through ball they want.","Communicate constantly — you see the whole picture, organize the shape.","Force attackers away from goal — toward the touchline, never centrally."]},{label:"A to D transition",points:["Drop to protect the goal — that is your ONLY job in transition.","Do NOT step forward. The 8s cover the gap you leave.","Hold the line. Communicate loudly. Organize."]},{label:"D to A transition",points:["Hold the line — full stop. No exceptions.","If possession is lost in transition — A to D rules activate immediately."]}],rule:"Ball comes to your side — you step. Ball leaves your side — you drop."},
+  "Fullback":{phases:[{label:"In possession",points:["Read the wide mid — mirror the opposite. Always.","Wide mid tucks inside — you overlap outside. Run in stride, first look is the cutback or cross.","Wide mid holds width — you tuck inside, create the 3-man mid, option to underlap in behind.","When you hold: position slightly ahead of the CB, available for reset or switch."]},{label:"Out of possession",points:["Contain and delay — stay on your feet. Do NOT dive in.","Force them toward the touchline or back inside.","Long ball over the top — drop and funnel toward goal immediately. Every player drops together.","Caught high — sprint back. This is the highest priority recovery run in the entire system.","Be the aggressive presser wide — the wide mid funnels inside, you are the outside wall."]},{label:"A to D transition",points:["If you were overlapping when possession was lost — sprint back immediately.","Hold position first — do NOT push forward on the loss.","Cover the space until you return."]},{label:"D to A transition",points:["Ball-side — read the wide mid, mirror the opposite as always.","Far-side — hold, protect, stay connected to the CBs."]}],rule:"Contain, delay, stay on your feet. Long ball — drop and funnel. Caught high — sprint back."},
+  "Wide mid":{phases:[{label:"In possession",points:["Ball on your side — stay wide initially, then cut inside diagonally into the channel.","Ball far side — tuck inside, find the pocket, arrive late off the 8's second touch.","Three run types: (1) diagonal into the channel, (2) late arrival into box, (3) underlap behind the FB.","Rotation rule with strikers: you go, I go. One in, one out. Shape is maintained."]},{label:"Out of possession",points:["Stay goal-side. Body shape forces the winger inside toward the compact block.","Let the FB be the aggressive presser wide — you are the funnel.","Track the run in behind — follow to the edge of the penalty area, then hold and hand off.","Ball far side — tuck in immediately. Form the compact mid block.","Press triggers still apply — heavy touch or facing own goal, press now."]},{label:"A to D transition",points:["Ball lost on your side — you are the second presser immediately.","Ball lost far side — tuck in, recover your defensive position now.","After 5 seconds — back in your defensive line. No exceptions.","Wide mid caught high on the wrong side is the most dangerous moment in our system."]},{label:"D to A transition",points:["Push forward immediately — provide width in the attack.","Run in behind if the FB tucks inside.","Recover immediately if possession is lost again — no ball watching."]}],rule:"Stay goal-side. Force inside. Track to the box then hold. Tuck in when the ball is far."},
+  "8 / Central mid":{phases:[{label:"In possession",points:["Connector 8: drop to receive from CBs, break the press, always available as the safe pass.","Carrier 8: drive, carry, progress. Arrive late into the box on three triggers.","Three triggers for the Carrier: (1) ball goes wide, (2) 10 plays forward, (3) striker lays off.","One goes, one stays. Always. Never both forward simultaneously.","Connector 8 drops first — always — if the Carrier goes forward."]},{label:"Out of possession",points:["Ball-side 8 steps to press the opposing mid. Far-side 8 holds and covers.","Track runners into the box — all the way. No handing off early.","If two runners go — one 8 tracks, one holds and alerts the CB.","Stay compact and central — block passing lanes with body position."]},{label:"A to D transition",points:["Both 8s drop. Immediately. No reading, no hesitating. This is non-negotiable.","CBs drop to protect the goal — you drop to cover the gap they leave.","The through ball only happens when this gap is empty. The gap is YOUR responsibility.","5-second rule — if ball not won back, get behind the ball now.","This is the standard. It does not change."]},{label:"D to A transition",points:["Carrier 8 pushes forward — supports the 10, arrives late into the box.","Connector 8 holds — covers the space behind the Carrier.","One goes, one stays — same rule as always."]}],rule:"One goes, one stays. Drop every time. Track your runner all the way. The gap is your responsibility."},
+  "10":{phases:[{label:"In possession",points:["Connector first — receive, release, move, arrive. In that order.","First thought on the ball: who is in a better position than me?","Live between the lines — always in the pocket, always hard to mark.","Drop deep when pressed — drag a defender out, create space for others to exploit.","Arrive into the box situationally — trigger is ball wide and strikers and wide mids occupying defenders.","Creation happens as a consequence of good connecting — not by forcing it."]},{label:"Out of possession",points:["Press winning — join immediately, become the second presser, create the trap.","Press losing — hold, stay compact, be the block they run into.","Middle third — protect the space in front of the 8s. That is the priority.","Block central lanes with body position — make the easy central pass unavailable.","Never both 9 and 10 pressing and losing — leaves a massive gap for the 8s to cover alone."]},{label:"A to D transition",points:["If you lost it — press immediately. Personal responsibility.","If a teammate lost it — become the second presser, support immediately.","After 5 seconds — drop into the pocket, first line of defensive pressure in front of the 8s."]},{label:"D to A transition",points:["Drop into the pocket immediately — be the first outlet for whoever won the ball.","Receive, turn, play forward — one or two touch maximum in transition.","If the path forward is blocked — lay off to the arriving 8.","Make the 8s and the striker better. Everything else follows."]}],rule:"Make the 8s and the striker better. Everything else follows."},
+  "9 / Striker":{phases:[{label:"In possession",points:["Read the defense first. Then decide who you are today.","Defense sitting deep — become the target. Hold, bring others in, use the layoff.","Defense playing a high line — become the runner. Go in behind, stretch them.","Two-run principle: first run for the defender, second run for yourself.","Layoff is a weapon — set up the arriving 8. Use it deliberately.","9 and 10 read together: if one is marked tight, the other exploits the space created."]},{label:"Out of possession",points:["Cut the passing lane first — angle the run to guide them where we want them.","Force them wide. Never dive in. Stay on your feet.","Press triggers: heavy touch or defender facing own goal — press now.","Drop to the halfway line when opponent is in your half. You are the counter threat.","Do not track all the way back — stay available for the transition."]},{label:"A to D transition",points:["You lost it — press immediately. You own the first response.","You didn't lose it — hold the press line, cut the back pass option, buy time.","After 5 seconds — drop to halfway, hold the line, be the outlet."]},{label:"D to A transition",points:["Move the moment the ball is won — immediately. Give the winner an outlet.","Two-run principle activates — path there, go in behind; path not there, drop and offer short.","Read the moment: if the path is there — go direct. If not — secure it."]}],rule:"Read the defense first. Then decide who you are today."}
+};
+
+const ALL_QUESTIONS = [
+  {q:"What are the two universal press triggers that apply in ALL defensive shapes?",type:"mc",opts:["Heavy touch and ball going out of bounds","Heavy touch and defender receiving facing own goal","Defender facing own goal and back pass to GK","Back pass to GK and heavy touch"],ans:1,pos:"All positions"},
+  {q:"When the ball is on your side as a centerback, what role do you take?",type:"mc",opts:["Sweeper — drop and cover the space","Stopper — step and engage the striker","Hold flat and wait","Push forward to intercept early"],ans:1,pos:"Centerback"},
+  {q:"The 8s have a non-negotiable rule the moment possession is lost. What is it?",type:"mc",opts:["One 8 presses, one holds","Both 8s push forward to counter-press","Both 8s drop immediately — no reading, no hesitating","The ball-side 8 drops, far-side 8 holds"],ans:2,pos:"8 / Central mid"},
+  {q:"What is the 10's first thought the moment they receive the ball?",type:"mc",opts:["Shoot on sight if the angle is there","Dribble past the nearest defender","Who is in a better position than me?","Hold and wait for a teammate to call for it"],ans:2,pos:"10"},
+  {q:"When the wide mid holds their width in possession, what does the fullback do?",type:"mc",opts:["Overlap outside immediately","Hold their defensive position","Tuck inside and create a 3-man midfield","Push high to support the striker directly"],ans:2,pos:"Fullback"},
+  {q:"How many seconds does the team have to win the ball back before resetting into defensive shape?",type:"mc",opts:["3 seconds","10 seconds","5 seconds","8 seconds"],ans:2,pos:"All positions"},
+  {q:"When an opposing midfielder makes a run into your box, how far do the 8s track?",type:"mc",opts:["To the halfway line only","To the edge of the penalty area then hold","All the way into the box — no handing off","They hold their position and let the CB handle it"],ans:2,pos:"8 / Central mid"},
+  {q:"What is the centerback pairing rule in one sentence?",type:"fill",ans:"ball comes to your side you step ball leaves your side you drop",keywords:["step","drop","side","ball"],pos:"Centerback"},
+  {q:"The 9's primary defensive job when the opponent builds from the back is to:",type:"mc",opts:["Sprint at the CB and try to win the ball aggressively","Cut the passing lane and guide them where we want them","Drop to the halfway line immediately","Chase the ball carrier and never stop"],ans:1,pos:"9 / Striker"},
+  {q:"What is the fullback's HIGHEST PRIORITY when caught high in possession and the ball is lost?",type:"mc",opts:["Press the nearest opponent immediately","Hold position and assess","Sprint back to their defensive position — immediately","Push forward and join the counter-press"],ans:2,pos:"Fullback"},
+  {q:"What is the 10's positional home in possession?",type:"mc",opts:["High and tight to the striker","Flat in the midfield line","Between the lines — in the pocket, hard to mark","Deep, next to the 8s, always available"],ans:2,pos:"10"},
+  {q:"In the D to A transition, who moves FIRST to trigger the attack?",type:"mc",opts:["The 8s push forward immediately","The fullbacks overlap","The striker and 10 make their runs immediately — give the winner an outlet","The wide mids push wide to create space"],ans:2,pos:"All positions"},
+  {q:"What does the GK do when it is 50/50 between them and the striker on a through ball?",type:"mc",opts:["Hold the line and let the CB deal with it","Come out aggressively — the GK goes. Every time.","Stay on the goal line and narrow the angle","Call for the CB to clear it"],ans:1,pos:"Goalkeeper"},
+  {q:"What is the wide mid's job when the ball is on the FAR SIDE in possession?",type:"mc",opts:["Stay wide and stretch the defense","Sprint forward to support the striker","Tuck inside, find the pocket, arrive late off the 8's second touch","Hold their position and wait"],ans:2,pos:"Wide mid"},
+  {q:"Name the three triggers for the Carrier 8 to arrive into the box.",type:"fill",ans:"ball goes wide ten plays forward striker lays off",keywords:["wide","forward","lays","layoff","10","striker"],pos:"8 / Central mid"},
+  {q:"When the opponent plays a long ball over the top, what does the entire team do?",type:"mc",opts:["The GK comes out and the CBs hold high","Only the CBs drop — everyone else holds shape","Every line drops and funnels toward goal simultaneously","The 8s press high and the back four drops"],ans:2,pos:"All positions"},
+  {q:"What is the rotation rule between the wide mids and strikers in possession?",type:"mc",opts:["Both wide mids and both strikers can interchange freely","You go, I go — one in, one out. Shape is maintained.","Only the 10 can rotate with the wide mids","Wide mids stay wide at all times, no rotation"],ans:1,pos:"Wide mid"},
+  {q:"What is the 9's defensive responsibility the moment THEY lose the ball?",type:"mc",opts:["Drop back immediately to the halfway line","Press immediately — personal responsibility, they own the first response","Wait for the 10 to press first","Hold their position as the counter threat"],ans:1,pos:"9 / Striker"},
+  {q:"How far does the wide mid track when an opposing wide player makes a run in behind the fullback?",type:"mc",opts:["All the way into the box","Hold the defensive mid line — trust the FB","Track to the edge of the penalty area then hold","Only track to the halfway line"],ans:2,pos:"Wide mid"},
+  {q:"What is the one rule that applies to the 8s in EVERY phase of the game?",type:"fill",ans:"one goes one stays",keywords:["one","goes","stays"],pos:"8 / Central mid"},
+];
+
+let currentQ=0,score=0,playerName="",answered=false,quizQs=[],results=[];
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+  if(id==='screen-study')renderStudy();
+}
+
+function renderStudy(){
+  const keys=Object.keys(POSITIONS);
+  const grid=document.getElementById('pos-grid');
+  grid.innerHTML=keys.map((p,i)=>`<button class="pos-btn" id="pb-${i}" onclick="selectPos(${i})">${p}</button>`).join('');
+  selectPos(0);
+}
+
+function selectPos(idx){
+  document.querySelectorAll('.pos-btn').forEach((b,i)=>b.classList.toggle('selected',i===idx));
+  const keys=Object.keys(POSITIONS);
+  const pos=POSITIONS[keys[idx]];
+  let html='';
+  pos.phases.forEach(ph=>{
+    html+=`<div class="card"><div class="phase-label">${ph.label}</div>`;
+    ph.points.forEach(pt=>{html+=`<p style="margin-bottom:6px">• ${pt}</p>`;});
+    html+='</div>';
+  });
+  html+=`<div class="rule">"${pos.rule}"</div>`;
+  document.getElementById('pos-detail').innerHTML=html;
+}
+
+function goToName(){showScreen('screen-name');}
+
+function confirmName(){
+  const n=document.getElementById('player-name').value.trim();
+  if(!n){alert('Enter your name first.');return;}
+  playerName=n;
+  quizQs=[...ALL_QUESTIONS].sort(()=>Math.random()-0.5);
+  currentQ=0;score=0;results=[];
+  showScreen('screen-quiz');
+  renderQuestion();
+}
+
+function renderQuestion(){
+  const q=quizQs[currentQ];
+  const pct=Math.round((currentQ/quizQs.length)*100);
+  document.getElementById('progress-fill').style.width=pct+'%';
+  document.getElementById('q-counter').textContent=`Question ${currentQ+1} of ${quizQs.length}`;
+  document.getElementById('q-timer').textContent=q.pos;
+  document.getElementById('q-text').textContent=q.q;
+  document.getElementById('feedback').className='feedback';
+  document.getElementById('btn-next').style.display='none';
+  answered=false;
+  let html='';
+  if(q.type==='mc'){
+    q.opts.forEach((o,i)=>{html+=`<button class="opt" id="opt-${i}" onclick="answerMC(${i})">${o}</button>`;});
+  } else {
+    html+=`<input class="fill-input" id="fill-ans" type="text" placeholder="Type your answer..." /><button class="btn btn-primary" onclick="answerFill()">Submit answer</button>`;
+  }
+  document.getElementById('q-options').innerHTML=html;
+}
+
+function answerMC(idx){
+  if(answered)return;
+  answered=true;
+  const q=quizQs[currentQ];
+  document.querySelectorAll('.opt').forEach((o,i)=>{
+    o.disabled=true;
+    if(i===q.ans)o.classList.add('correct');
+    if(i===idx&&idx!==q.ans)o.classList.add('wrong');
+  });
+  const correct=idx===q.ans;
+  if(correct)score++;
+  results.push({q:q.q,correct,pos:q.pos});
+  showFeedback(correct,q.opts[q.ans]);
+}
+
+function answerFill(){
+  if(answered)return;
+  const input=document.getElementById('fill-ans');
+  const val=input.value.toLowerCase().trim();
+  if(!val){alert('Type an answer first.');return;}
+  const q=quizQs[currentQ];
+  const hits=q.keywords.filter(k=>val.includes(k)).length;
+  const correct=hits>=Math.ceil(q.keywords.length*0.55);
+  if(correct)score++;
+  answered=true;
+  input.disabled=true;
+  results.push({q:q.q,correct,pos:q.pos});
+  showFeedback(correct,q.ans);
+}
+
+function showFeedback(correct,correctAns){
+  const fb=document.getElementById('feedback');
+  fb.className='feedback show '+(correct?'correct':'wrong');
+  fb.innerHTML=correct?'<strong>Correct!</strong>':'<strong>Not quite.</strong> Correct answer: "'+correctAns+'"';
+  document.getElementById('btn-next').style.display='block';
+}
+
+function nextQuestion(){
+  currentQ++;
+  if(currentQ>=quizQs.length){showResult();return;}
+  renderQuestion();
+}
+
+function showResult(){
+  const pct=Math.round((score/quizQs.length)*100);
+  const passed=pct>=75;
+  document.getElementById('result-name-header').textContent=playerName;
+  document.getElementById('result-pct').textContent=pct+'%';
+  document.getElementById('result-fraction').textContent=score+' / '+quizQs.length+' correct';
+  const badge=document.getElementById('result-badge');
+  const msg=document.getElementById('result-msg');
+  const cons=document.getElementById('consequence-box');
+  const consText=document.getElementById('consequence-text');
+  if(pct===100){
+    badge.innerHTML='<span class="badge badge-gold">Elite — 100% 🏆</span>';
+    msg.innerHTML='<p style="font-size:14px;line-height:1.7">Perfect score. You know the system inside out. Now show it on the pitch.</p>';
+    cons.style.display='none';
+  } else if(passed){
+    badge.innerHTML='<span class="badge badge-green">Passed — '+pct+'%</span>';
+    msg.innerHTML='<p style="font-size:14px;line-height:1.7">Good work. Go back and lock in the questions you missed before the season starts.</p>';
+    cons.style.display='none';
+  } else {
+    badge.innerHTML='<span class="badge badge-red">Failed — '+pct+'%</span>';
+    msg.innerHTML='<p style="font-size:14px;line-height:1.7">You need to study the game model again. Retake and pass before next session.</p>';
+    cons.style.display='block';
+    const owed=pct<50?'20 suicides':'10 suicides';
+    consText.textContent='You owe Coach: '+owed+' at the next session. Read the game model, retake the quiz, pass it. No shortcuts.';
+  }
+  let breakHtml='<h2 style="font-size:13px;font-weight:700;margin-bottom:8px">Question breakdown</h2>';
+  results.forEach((r,i)=>{
+    breakHtml+=`<div class="breakdown-row"><span style="flex:1;font-size:13px;color:#444;padding-right:8px">${i+1}. ${r.pos}</span><span class="${r.correct?'correct-dot':'wrong-dot'}">${r.correct?'✓':'✗'}</span></div>`;
+  });
+  document.getElementById('result-breakdown').innerHTML=breakHtml;
+  showScreen('screen-result');
+}
+</script>
+</body>
+</html>
