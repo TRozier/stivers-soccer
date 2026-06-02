@@ -67,7 +67,36 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </head>
 <body>
 
-<div id="screen-home" class="screen active">
+<div id="screen-password" class="screen active">
+  <div style="padding-top:2rem">
+    <div class="home-logo">⚽</div>
+    <div class="header">
+      <h1>Stivers Soccer</h1>
+      <p>Authorized access only.</p>
+    </div>
+    <div class="card">
+      <p style="font-size:14px;color:#444;margin-bottom:12px">Enter the team password to continue.</p>
+      <input class="fill-input" id="pw-input" type="password" placeholder="Password..." maxlength="40" />
+      <div id="pw-error" style="color:#E24B4A;font-size:13px;margin-bottom:8px;display:none">Incorrect password. Try again.</div>
+      <button class="btn btn-primary" onclick="checkPassword()">Enter</button>
+    </div>
+  </div>
+</div>
+
+<div id="screen-expired" class="screen">
+  <div style="padding-top:2rem">
+    <div class="home-logo">🔒</div>
+    <div class="header">
+      <h1>Access closed</h1>
+      <p>This resource is no longer available.</p>
+    </div>
+    <div class="card">
+      <p style="font-size:14px;line-height:1.7;color:#444">This game model quiz has been taken offline. If you have questions, see Coach directly.</p>
+    </div>
+  </div>
+</div>
+
+<div id="screen-home" class="screen">
   <div style="padding-top:1.5rem">
     <div class="home-logo">⚽</div>
     <div class="header">
@@ -75,7 +104,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <p>Game Model Quiz — Know the system. Own your role.</p>
     </div>
     <div class="card">
-      <p style="font-size:14px;line-height:1.7;color:#444">Study the game model. Then take the quiz. Pass with <strong>75% or above</strong>. Fail and you owe Coach at the next session. No excuses.</p>
+      <p style="font-size:14px;line-height:1.7;color:#444">This is how we play at Stivers. This is our blueprint. It is your responsibility to study not only your position, but all positions — because we only succeed as a team.</p>
+      <p style="font-size:14px;line-height:1.7;color:#444;margin-top:10px">Study each positional role. When you are ready, take the quiz. Passing with <strong>75% or more</strong> earns you freedom from the extra work you will have if not. You fail, you get extra efforts, you try again.</p>
+      <p style="font-size:14px;line-height:1.7;color:#444;margin-top:10px">The game is more mental than physical. Knowing why we train this way and why we do things will help us be the team we envision ourselves being. I know all of you will not disappoint — so let's get it.</p>
     </div>
     <button class="btn btn-primary" onclick="showScreen('screen-study')">📖 Study the game model</button>
     <button class="btn btn-outline" style="margin-top:8px" onclick="goToName()">✅ I studied — take the quiz</button>
@@ -144,6 +175,35 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 
 <script>
+function checkExpiry() {
+  const expiry = new Date('2026-08-06T00:00:00');
+  const now = new Date();
+  if(now >= expiry) {
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById('screen-expired').classList.add('active');
+    return true;
+  }
+  return false;
+}
+
+function checkPassword() {
+  const val = document.getElementById('pw-input').value;
+  const err = document.getElementById('pw-error');
+  if(val === atob('U21hc2htb3V0aFNxdWFkcm9uMjc=')) {
+    if(!checkExpiry()) {
+      document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+      document.getElementById('screen-home').classList.add('active');
+    }
+  } else {
+    err.style.display='block';
+    document.getElementById('pw-input').value='';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  checkExpiry();
+});
+
 const POSITIONS = {
   "Goalkeeper":{phases:[{label:"In possession",points:["Read the moment — short if available, long if pressed.","Distribute within 3 seconds. Hesitation invites the press.","The 9 at halfway is always your long outlet.","Quality over distance — a poor long ball resets nothing."]},{label:"Out of possession",points:["Sweeper keeper — claim everything in behind. Aggressively.","50/50 between you and the striker — you go. Every time. No hesitation.","You are the voice. Call the line. Call the runner. Be loud and specific.","Positioning is the first save — be in the right place before the shot comes.","Near post is locked. Force the shooter to beat you far post."]},{label:"A to D transition",points:["Communicate the shape immediately when possession is lost.","Cover in behind — be ready if the press and recovery both fail.","Reset the shape after every defensive moment — loud and clear."]},{label:"D to A transition",points:["Distribute immediately — read the moment, short or long.","Support the shape from behind — communicate what you see."]}],rule:"Be the voice, sweep the space, read the moment."},
   "Centerback":{phases:[{label:"In possession",points:["Ball on your side — you are the Stopper. Step to the threat, win the duel.","Ball away from you — you are the Sweeper. Drop half a step, watch the space.","Ball central — strong side steps, weak side drops.","Roles switch the moment the ball switches sides — immediately.","Do NOT chase in behind as the Stopper — trust your partner."]},{label:"Out of possession",points:["Step aggressively when striker receives with back to goal — be proactive.","Hold a medium line — not too high, not too deep.","Never both CBs stepping at the same time — that is the through ball they want.","Communicate constantly — you see the whole picture, organize the shape.","Force attackers away from goal — toward the touchline, never centrally."]},{label:"A to D transition",points:["Drop to protect the goal — that is your ONLY job in transition.","Do NOT step forward. The 8s cover the gap you leave.","Hold the line. Communicate loudly. Organize."]},{label:"D to A transition",points:["Hold the line — full stop. No exceptions.","If possession is lost in transition — A to D rules activate immediately."]}],rule:"Ball comes to your side — you step. Ball leaves your side — you drop."},
