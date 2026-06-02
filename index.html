@@ -111,10 +111,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div id="screen-name" class="screen">
   <div style="padding-top:2rem">
-    <div class="header"><h1>Who are you?</h1><p>Enter your name before the quiz starts.</p></div>
+    <div class="header"><h1>Who are you?</h1><p>Enter your info before the quiz starts.</p></div>
     <div class="card">
-      <p style="font-size:14px;color:#444;margin-bottom:12px">Your name goes on your result. Make it count.</p>
+      <p style="font-size:14px;color:#444;margin-bottom:12px">Your name and position go on your result. Make it count.</p>
       <input class="fill-input" id="player-name" type="text" placeholder="First name Last name..." maxlength="30" />
+      <select class="fill-input" id="player-position" style="cursor:pointer;appearance:auto">
+        <option value="">Select your position...</option>
+        <option value="Goalkeeper">Goalkeeper</option>
+        <option value="Centerback">Centerback</option>
+        <option value="Fullback">Fullback</option>
+        <option value="Wide mid">Wide mid</option>
+        <option value="8 / Central mid">8 / Central mid</option>
+        <option value="10">10</option>
+        <option value="9 / Striker">9 / Striker</option>
+      </select>
       <button class="btn btn-primary" onclick="confirmName()">Let&#x2019;s go &#x2192;</button>
     </div>
     <button class="btn btn-outline" onclick="showScreen('screen-home')">Back</button>
@@ -227,7 +237,7 @@ const ALL_QUESTIONS = [
   {q:'What is the 9 rule in one sentence?',type:'fill',ans:'read the defense first then decide who you are today',keywords:['read','defense','decide','today'],pos:'9 / Striker'},
 ];
 
-let currentQ=0,score=0,playerName='',answered=false,quizQs=[],results=[];
+let currentQ=0,score=0,playerName='',playerPosition='',answered=false,quizQs=[],results=[];
 
 function checkExpiry(){
   const expiry=new Date('2026-08-06T00:00:00');
@@ -283,9 +293,16 @@ function goToName(){showScreen('screen-name');}
 
 function confirmName(){
   const n=document.getElementById('player-name').value.trim();
+  const pos=document.getElementById('player-position').value;
   if(!n){alert('Enter your name first.');return;}
+  if(!pos){alert('Select your position.');return;}
   playerName=n;
-  quizQs=[...ALL_QUESTIONS].sort(()=>Math.random()-0.5).slice(0,20);
+  playerPosition=pos;
+  const myQs=ALL_QUESTIONS.filter(q=>q.pos===pos||q.pos==='Universal');
+  const otherQs=ALL_QUESTIONS.filter(q=>q.pos!==pos&&q.pos!=='Universal');
+  const myShuffled=[...myQs].sort(()=>Math.random()-0.5).slice(0,12);
+  const otherShuffled=[...otherQs].sort(()=>Math.random()-0.5).slice(0,8);
+  quizQs=[...myShuffled,...otherShuffled].sort(()=>Math.random()-0.5);
   currentQ=0;score=0;results=[];
   showScreen('screen-quiz');
   renderQuestion();
@@ -355,7 +372,7 @@ function nextQuestion(){
 function showResult(){
   const pct=Math.round((score/quizQs.length)*100);
   const passed=pct>=75;
-  document.getElementById('result-name-header').textContent=playerName;
+  document.getElementById('result-name-header').textContent=playerName+' — '+playerPosition;
   document.getElementById('result-pct').textContent=pct+'%';
   document.getElementById('result-fraction').textContent=score+' / '+quizQs.length+' correct';
   const badge=document.getElementById('result-badge');
