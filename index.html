@@ -102,9 +102,54 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 
 <div id="screen-study" class="screen">
-  <div class="header"><h1>Game model</h1><p>Tap your position first. Then read them all.</p></div>
-  <div class="pos-grid" id="pos-grid"></div>
-  <div id="pos-detail"></div>
+  <div class="header"><h1>Study guide</h1><p>Game principles first. Then your position.</p></div>
+  <div style="display:flex;gap:8px;margin-bottom:12px">
+    <button class="pos-btn" id="tab-principles" onclick="switchTab('principles')" style="flex:1;background:#1a1a2e;color:#fff;border-color:#1a1a2e">Game principles</button>
+    <button class="pos-btn" id="tab-positions" onclick="switchTab('positions')" style="flex:1">Positions</button>
+  </div>
+  <div id="tab-content-principles">
+    <div class="card">
+      <div class="phase-label">Phase 1 — Attacking (In Possession)</div>
+      <p style="font-size:13px;font-weight:700;color:#1a1a2e;margin-bottom:6px">Purposeful Directness</p>
+      <p style="margin-bottom:5px">&#x2022; <strong>Play forward with intent.</strong> Keep the ball purposefully — always looking to progress and attack. Possession for possession&#x2019;s sake is not our game.</p>
+      <p style="margin-bottom:5px">&#x2022; <strong>Stretch the opponent.</strong> Create width and depth to open spaces between and behind defensive lines.</p>
+      <p style="margin-bottom:5px">&#x2022; <strong>Break defensive lines.</strong> Incisive passes, dribbles, and dynamic runs to penetrate the opponent&#x2019;s shape.</p>
+      <p style="margin-bottom:5px">&#x2022; <strong>Speed of play.</strong> Move the ball quickly to exploit gaps and disrupt defensive organization.</p>
+      <p style="margin-bottom:5px">&#x2022; <strong>Create and finish.</strong> Use creativity, off-ball movement, and quick combinations to generate high-quality chances. Occupy near post, back post, penalty spot, and edge of the box. React to second balls.</p>
+    </div>
+    <div class="card">
+      <div class="phase-label">Phase 2 — Attacking to Defending (A to D)</div>
+      <p style="font-size:13px;font-weight:700;color:#1a1a2e;margin-bottom:6px">Immediate, Disciplined Transition</p>
+      <p style="margin-bottom:5px">&#x2022; <strong>Immediate reaction.</strong> The player who lost the ball presses first &#x2014; every time, no exceptions.</p>
+      <p style="margin-bottom:5px">&#x2022; <strong>5-second rule.</strong> Counter-press aggressively. If the ball is not won back within 5 seconds &#x2014; reset into defensive shape. The reset is discipline, not failure.</p>
+      <p style="margin-bottom:5px">&#x2022; <strong>Reorganize quickly.</strong> Transition into compact defensive shape to deny space.</p>
+      <p style="margin-bottom:5px">&#x2022; <strong>Force wide.</strong> Channel the ball toward less dangerous areas to buy time.</p>
+      <p style="margin-bottom:5px">&#x2022; <strong>Anticipate outlets.</strong> Identify the opponent&#x2019;s passing options and cut off key lanes before they are used.</p>
+      <div class="rule" style="margin-top:10px;margin-bottom:0">&#x1F6A8; Universal press triggers &#x2014; every phase, every position: (1) Heavy touch &#x2014; react immediately. (2) Defender receiving with back to goal &#x2014; press now.</div>
+    </div>
+    <div class="card">
+      <div class="phase-label">Phase 3 — Defending (Out of Possession)</div>
+      <p style="font-size:13px;font-weight:700;color:#1a1a2e;margin-bottom:6px">Tactical Discipline with Smart Aggression</p>
+      <p style="margin-bottom:5px">&#x2022; <strong>Immediate pressure.</strong> Apply controlled aggression to regain possession, led by the player who lost the ball.</p>
+      <p style="margin-bottom:5px">&#x2022; <strong>Three defensive shapes.</strong> High press &#x2014; opponent GK or CB building, or we need it urgently late. Mid block &#x2014; default. Low block &#x2014; protecting a lead, man down, or significant quality gap.</p>
+      <p style="margin-bottom:5px">&#x2022; <strong>The 9 sets the press.</strong> If the 9 goes, everyone goes. If the 9 holds, everyone holds. His movement is the trigger &#x2014; not a call, an action.</p>
+      <p style="margin-bottom:5px">&#x2022; <strong>Deny, delay, deflect.</strong> Close passing lanes, slow the attack, force play wide or backward. Never concede the central lane willingly.</p>
+      <p style="margin-bottom:5px">&#x2022; <strong>Collective responsibility.</strong> All players contribute. Long ball over the top &#x2014; every line drops and funnels toward goal together. Collective or it is chaos.</p>
+    </div>
+    <div class="card">
+      <div class="phase-label">Phase 4 — Defending to Attacking (D to A)</div>
+      <p style="font-size:13px;font-weight:700;color:#1a1a2e;margin-bottom:6px">Exploit Opportunities with Purpose</p>
+      <p style="margin-bottom:5px">&#x2022; <strong>Move immediately.</strong> The moment the ball is won &#x2014; move. Give the winner an outlet before they look up.</p>
+      <p style="margin-bottom:5px">&#x2022; <strong>Three counter options.</strong> Go direct in behind. Play to the 9 to hold. Secure possession and build. Choose fast.</p>
+      <p style="margin-bottom:5px">&#x2022; <strong>Scan before the ball arrives.</strong> The decision is made before possession is won &#x2014; not after.</p>
+      <p style="margin-bottom:5px">&#x2022; <strong>Vertical progression.</strong> Look for players in advanced positions to bypass pressure quickly. Use width to exploit space on the flanks.</p>
+      <p style="margin-bottom:5px">&#x2022; <strong>Controlled tempo.</strong> Attack with pace when the opportunity is real. Counter not on &#x2014; secure, build, move into Phase 1.</p>
+    </div>
+  </div>
+  <div id="tab-content-positions" style="display:none">
+    <div class="pos-grid" id="pos-grid"></div>
+    <div id="pos-detail"></div>
+  </div>
   <button class="btn btn-primary" onclick="goToName()">Ready &#x2014; take the quiz</button>
   <button class="btn btn-outline" style="margin-top:8px;margin-bottom:2rem" onclick="showScreen('screen-home')">Back</button>
 </div>
@@ -235,6 +280,24 @@ const ALL_QUESTIONS = [
   {q:'What is the 9 personal accountability rule the moment they lose the ball?',type:'mc',opts:['Drop back to the halfway line','Wait for the 10 to press first','Press immediately — you lost it, you own the first response','Call for the 8 to cover and hold position'],ans:2,pos:'9 / Striker'},
   {q:'How do the 9 and 10 read each other in possession?',type:'mc',opts:['They operate independently — no connection needed','If one is marked tightly, the other exploits the space created','The 10 always follows the 9 movement','The 9 always stays wide when the 10 is central'],ans:1,pos:'9 / Striker'},
   {q:'What is the 9 rule in one sentence?',type:'fill',ans:'read the defense first then decide who you are today',keywords:['read','defense','decide','today'],pos:'9 / Striker'},
+
+  // GAME PRINCIPLES QUESTIONS (pos:'Principles')
+  {q:'What is the main attacking principle at Stivers?',type:'mc',opts:['Aggressive possession — keep the ball at all costs','Purposeful Directness — play forward with intent, not possession for possession sake','Counter-attacking first — defend deep and break fast','Slow buildup — control tempo at all times'],ans:1,pos:'Principles'},
+  {q:'What does "Purposeful Directness" mean for how we attack?',type:'mc',opts:['Keep the ball as long as possible regardless of position','Play forward at every opportunity — possession is a tool, not the goal','Always play direct long balls to the striker','Pass sideways until a gap opens'],ans:1,pos:'Principles'},
+  {q:'In the attacking phase, what do we use to open spaces between and behind defensive lines?',type:'mc',opts:['Long balls only','Width and depth — stretch the opponent','Slow short passing to tire the defense','Central dribbling combinations'],ans:1,pos:'Principles'},
+  {q:'What are the two universal press triggers that apply in every phase and every position?',type:'mc',opts:['Back pass to GK and ball going out of bounds','Heavy touch and defender receiving with back to goal','Defender facing own goal and back pass to GK','Heavy touch and ball going wide'],ans:1,pos:'Principles'},
+  {q:'In the A to D transition, who initiates the press first?',type:'mc',opts:['The nearest player to the ball','The striker always','The player who lost the ball — personal accountability','The 8s drop and cover first'],ans:2,pos:'Principles'},
+  {q:'What is the 5-second rule in transition?',type:'mc',opts:['Press for 5 seconds then hold your position','Counter-press immediately — if ball not won in 5 seconds, reset into defensive shape','The GK has 5 seconds to distribute','Sprint back within 5 seconds of any loss'],ans:1,pos:'Principles'},
+  {q:'The 5-second reset is not a failure — what is it?',type:'fill',ans:'discipline',keywords:['discipline'],pos:'Principles'},
+  {q:'In the defending phase, what is the main principle?',type:'mc',opts:['Man to man marking everywhere','Tactical discipline with smart aggression','Sit deep and absorb pressure','Press high at all times'],ans:1,pos:'Principles'},
+  {q:'In our defending phase, where do we force the ball — and what do we never concede?',type:'mc',opts:['Force wide or backward — never concede the central lane','Force central — never let them go wide','Push them backward — never let them turn','Force toward goal — never let them switch'],ans:0,pos:'Principles'},
+  {q:'Who sets the press in the defending phase — and how?',type:'mc',opts:['The GK calls the press verbally','The 8s signal with their hands','The 9 sets it through movement — if he goes, everyone goes','The captain calls it from the sideline'],ans:2,pos:'Principles'},
+  {q:'What are the three defensive shapes and what triggers the high press?',type:'mc',opts:['High, mid, low — high press triggered when losing late only','High, mid, low — high press when opponent GK or CB builds from the back, or we need ball urgently','Compact, stretched, man-to-man — high press always','Three shapes all triggered by the striker'],ans:1,pos:'Principles'},
+  {q:'What is the collective response to a long ball over the top?',type:'mc',opts:['GK comes out, CBs hold high','Only the back four drops','Every line drops and funnels toward goal together — collective or it is chaos','8s press high, back four drops independently'],ans:2,pos:'Principles'},
+  {q:'In the D to A transition, what are the three counter options?',type:'mc',opts:['Hold, press, and reset','Go direct in behind, play to the 9 to hold, or secure possession and build','Long ball, short pass, or dribble','Sprint wide, play central, or switch sides'],ans:1,pos:'Principles'},
+  {q:'In D to A transition, when should the decision to counter be made?',type:'mc',opts:['After receiving the ball and assessing','Before possession is even won — scan and decide early','After the GK distributes','When the striker makes the first run'],ans:1,pos:'Principles'},
+  {q:'What happens when the counter is not on in D to A transition?',type:'mc',opts:['Force it anyway — transition speed matters','Hold and wait for the striker to drop','Secure the ball, build the shape, move into the attacking phase','Reset to a low block'],ans:2,pos:'Principles'},
+
 ];
 
 let currentQ=0,score=0,playerName='',playerPosition='',answered=false,quizQs=[],results=[];
@@ -270,6 +333,16 @@ function showScreen(id){
   if(id==='screen-study')renderStudy();
 }
 
+function switchTab(tab){
+  document.getElementById('tab-content-principles').style.display=tab==='principles'?'block':'none';
+  document.getElementById('tab-content-positions').style.display=tab==='positions'?'block':'none';
+  document.getElementById('tab-principles').style.background=tab==='principles'?'#1a1a2e':'#fff';
+  document.getElementById('tab-principles').style.color=tab==='principles'?'#fff':'#1a1a2e';
+  document.getElementById('tab-positions').style.background=tab==='positions'?'#1a1a2e':'#fff';
+  document.getElementById('tab-positions').style.color=tab==='positions'?'#fff':'#1a1a2e';
+  if(tab==='positions')renderStudy();
+}
+
 function renderStudy(){
   const keys=Object.keys(POSITIONS);
   document.getElementById('pos-grid').innerHTML=keys.map((p,i)=>`<button class="pos-btn" id="pb-${i}" onclick="selectPos(${i})">${p}</button>`).join('');
@@ -291,6 +364,17 @@ function selectPos(idx){
 
 function goToName(){showScreen('screen-name');}
 
+
+const PROXIMITY = {
+  'Goalkeeper': ['Centerback','Fullback'],
+  'Centerback': ['Goalkeeper','Fullback','8 / Central mid'],
+  'Fullback': ['Centerback','Goalkeeper','Wide mid'],
+  'Wide mid': ['Fullback','8 / Central mid','9 / Striker'],
+  '8 / Central mid': ['Centerback','Wide mid','10','9 / Striker'],
+  '10': ['8 / Central mid','9 / Striker','Wide mid'],
+  '9 / Striker': ['10','Wide mid','8 / Central mid']
+};
+
 function confirmName(){
   const n=document.getElementById('player-name').value.trim();
   const pos=document.getElementById('player-position').value;
@@ -298,11 +382,18 @@ function confirmName(){
   if(!pos){alert('Select your position.');return;}
   playerName=n;
   playerPosition=pos;
-  const myQs=ALL_QUESTIONS.filter(q=>q.pos===pos||q.pos==='Universal');
-  const otherQs=ALL_QUESTIONS.filter(q=>q.pos!==pos&&q.pos!=='Universal');
-  const myShuffled=[...myQs].sort(()=>Math.random()-0.5).slice(0,12);
-  const otherShuffled=[...otherQs].sort(()=>Math.random()-0.5).slice(0,8);
-  quizQs=[...myShuffled,...otherShuffled].sort(()=>Math.random()-0.5);
+  const principlesQs=ALL_QUESTIONS.filter(q=>q.pos==='Principles');
+  const posQs=ALL_QUESTIONS.filter(q=>q.pos===pos);
+  const proxPositions=PROXIMITY[pos]||[];
+  const proxQs=ALL_QUESTIONS.filter(q=>proxPositions.includes(q.pos));
+  const farQs=ALL_QUESTIONS.filter(q=>q.pos!==pos&&q.pos!=='Principles'&&q.pos!=='Universal'&&!proxPositions.includes(q.pos));
+  const picked6Principles=[...principlesQs].sort(()=>Math.random()-0.5).slice(0,6);
+  const picked10Pos=[...posQs].sort(()=>Math.random()-0.5).slice(0,10);
+  // 4 from other positions, weighted: 3 prox, 1 far (or all prox if no far)
+  const picked3Prox=[...proxQs].sort(()=>Math.random()-0.5).slice(0,3);
+  const picked1Far=[...farQs].sort(()=>Math.random()-0.5).slice(0,1);
+  const picked4Other=[...picked3Prox,...picked1Far].sort(()=>Math.random()-0.5).slice(0,4);
+  quizQs=[...picked6Principles,...picked10Pos,...picked4Other].sort(()=>Math.random()-0.5);
   currentQ=0;score=0;results=[];
   showScreen('screen-quiz');
   renderQuestion();
