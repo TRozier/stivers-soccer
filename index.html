@@ -440,6 +440,13 @@ function confirmName(){
     picked4Other.push(remaining.splice(Math.floor(Math.random()*remaining.length),1)[0]);
   }
   quizQs=[...picked6Principles,...picked10Pos,...picked4Other].sort(()=>Math.random()-0.5);
+  // Shuffle MC options and update ans index to match
+  quizQs=quizQs.map(q=>{
+    if(q.type!=='mc') return q;
+    const correctAnswer=q.opts[q.ans];
+    const shuffled=[...q.opts].sort(()=>Math.random()-0.5);
+    return {...q, opts:shuffled, ans:shuffled.indexOf(correctAnswer)};
+  });
   currentQ=0;score=0;results=[];
   showScreen('screen-quiz');
   renderQuestion();
