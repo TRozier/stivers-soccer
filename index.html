@@ -542,17 +542,24 @@ async function sbFetch(path, method='GET', body=null, upsert=false){
 }
 
 async function saveQuizResult(name, position, score, total, pct){
-  // Get attempt count first
-  const existing = await sbFetch('/rest/v1/quiz_results?player_name=eq.'+encodeURIComponent(name)+'&select=id');
-  const attempt = Array.isArray(existing) ? existing.length + 1 : 1;
-  await sbFetch('/rest/v1/quiz_results', 'POST', {
-    player_name: name,
-    position: position,
-    score: score,
-    total: total,
-    percentage: pct,
-    attempt: attempt
-  });
+  try {
+    const existing = await sbFetch('/rest/v1/quiz_results?player_name=eq.'+encodeURIComponent(name)+'&select=id');
+    const attempt = Array.isArray(existing) ? existing.length + 1 : 1;
+    const result = await sbFetch('/rest/v1/quiz_results', 'POST', {
+      player_name: name,
+      position: position,
+      score: score,
+      total: total,
+      percentage: pct,
+      attempt: attempt
+    });
+    console.log('Save result:', JSON.stringify(result));
+    if(result && result.code) {
+      alert('Save error: ' + result.message + ' (code: ' + result.code + ')');
+    }
+  } catch(e) {
+    alert('Connection error: ' + e.message);
+  }
 }
 
 async function loadDashboard(){
