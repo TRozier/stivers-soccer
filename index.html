@@ -62,6 +62,29 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .home-logo{font-size:48px;text-align:center;margin-bottom:8px}
 .phase-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:6px;margin-top:12px}
 .pw-error{color:#E24B4A;font-size:13px;margin-bottom:8px;display:none}
+
+.coach-section{background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:12px;padding:1rem;margin-bottom:12px}
+.coach-section h2{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#1a1a2e;margin-bottom:10px}
+.roster-row{border-bottom:0.5px solid #eee;padding:10px 0}
+.roster-row:last-child{border-bottom:none}
+.roster-name{font-size:14px;font-weight:600;color:#1a1a2e}
+.roster-pos{font-size:12px;color:#888;margin-bottom:6px}
+.roster-score{display:inline-block;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600;margin-bottom:8px}
+.score-elite{background:#FAEEDA;color:#633806}
+.score-pass{background:#E1F5EE;color:#085041}
+.score-fail{background:#FCEBEB;color:#791F1F}
+.rise-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:6px}
+.rise-item label{font-size:10px;font-weight:700;text-transform:uppercase;color:#888;display:block;margin-bottom:3px}
+.rise-select{width:100%;padding:5px;border-radius:6px;border:1.5px solid #ddd;font-size:13px;font-weight:600;color:#1a1a2e;background:#fff;cursor:pointer}
+.captain-badge{display:inline-block;background:#FAEEDA;color:#633806;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;margin-left:6px}
+.notes-input{width:100%;padding:8px;border-radius:8px;border:1.5px solid #ddd;font-size:13px;color:#1a1a2e;margin-top:6px;resize:none}
+.save-btn{padding:5px 14px;border-radius:8px;background:#1a1a2e;color:#fff;border:none;font-size:12px;font-weight:600;cursor:pointer;margin-top:6px}
+.attempt-chip{font-size:11px;color:#aaa;margin-left:6px}
+.dashboard-empty{text-align:center;padding:2rem;color:#aaa;font-size:14px}
+.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1rem}
+.summary-card{background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:10px;padding:.75rem;text-align:center}
+.summary-card .num{font-size:24px;font-weight:700;color:#1a1a2e}
+.summary-card .lbl{font-size:11px;color:#888;margin-top:2px}
 </style>
 </head>
 <body>
@@ -322,6 +345,10 @@ function checkPassword(){
       document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
       document.getElementById('screen-home').classList.add('active');
     }
+  } else if(val===atob('Uml2ZXJUaWdlcnMyMDI2Q29hY2g=')){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById('screen-coach').classList.add('active');
+    loadDashboard();
   } else {
     err.style.display='block';
     document.getElementById('pw-input').value='';
@@ -333,6 +360,7 @@ function showScreen(id){
   document.getElementById(id).classList.add('active');
   window.scrollTo(0,0);
   if(id==='screen-study')renderStudy();
+  if(id==='screen-coach')loadDashboard();
 }
 
 function switchTab(tab){
@@ -462,6 +490,7 @@ function nextQuestion(){
 
 function showResult(){
   const pct=Math.round((score/quizQs.length)*100);
+  saveQuizResult(playerName, playerPosition, score, quizQs.length, pct).catch(console.error);
   const passed=pct>=75;
   document.getElementById('result-name-header').textContent=playerName+' — '+playerPosition;
   document.getElementById('result-pct').textContent=pct+'%';
@@ -492,7 +521,150 @@ function showResult(){
   showScreen('screen-result');
 }
 
+const SUPABASE_URL = 'https://ypezbqnhpklppspkzrrn.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlwZXpicW5ocGtscHBzcGt6cnJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1Mjc2NTMsImV4cCI6MjA5NjEwMzY1M30.K06pKjoqBAEbHi7SM_jyXMrRlppBTguf1l4lytJODoc';
+
+async function sbFetch(path, method='GET', body=null, upsert=false){
+  const prefer = upsert ? 'resolution=merge-duplicates' : (method==='POST' ? 'return=representation' : '');
+  const opts = {
+    method,
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': prefer
+    }
+  };
+  if(body) opts.body = JSON.stringify(body);
+  const res = await fetch(SUPABASE_URL + path, opts);
+  try { return await res.json(); } catch(e) { return null; }
+}
+
+async function saveQuizResult(name, position, score, total, pct){
+  // Get attempt count first
+  const existing = await sbFetch('/rest/v1/quiz_results?player_name=eq.'+encodeURIComponent(name)+'&select=id');
+  const attempt = Array.isArray(existing) ? existing.length + 1 : 1;
+  await sbFetch('/rest/v1/quiz_results', 'POST', {
+    player_name: name,
+    position: position,
+    score: score,
+    total: total,
+    percentage: pct,
+    attempt: attempt
+  });
+}
+
+async function loadDashboard(){
+  // Load quiz results - get latest per player
+  const results = await sbFetch('/rest/v1/quiz_results?select=*&order=taken_at.desc');
+  const rise = await sbFetch('/rest/v1/rise_ratings?select=*');
+
+  if(!Array.isArray(results)){ 
+    document.getElementById('coach-roster').innerHTML='<div class="dashboard-empty">No quiz results yet.</div>';
+    return;
+  }
+
+  // Get latest result per player
+  const playerMap = {};
+  const attemptCount = {};
+  results.forEach(r => {
+    attemptCount[r.player_name] = (attemptCount[r.player_name]||0) + 1;
+    if(!playerMap[r.player_name]) playerMap[r.player_name] = r;
+  });
+
+  const players = Object.values(playerMap);
+  const riseMap = {};
+  if(Array.isArray(rise)) rise.forEach(r => riseMap[r.player_name] = r);
+
+  // Summary stats
+  const passed = players.filter(p => p.percentage >= 75).length;
+  const avg = players.length ? Math.round(players.reduce((a,b) => a+b.percentage, 0)/players.length) : 0;
+  document.getElementById('sum-total').textContent = players.length;
+  document.getElementById('sum-passed').textContent = passed;
+  document.getElementById('sum-avg').textContent = avg + '%';
+
+  // Sort by percentage desc
+  players.sort((a,b) => b.percentage - a.percentage);
+
+  let html = '';
+  players.forEach(p => {
+    const r = riseMap[p.player_name] || {};
+    const attempts = attemptCount[p.player_name] || 1;
+    const scoreClass = p.percentage === 100 ? 'score-elite' : p.percentage >= 75 ? 'score-pass' : 'score-fail';
+    const scoreLabel = p.percentage === 100 ? 'Elite' : p.percentage >= 75 ? 'Passed' : 'Failed';
+    
+    // Captain calc: quiz 40%, RISE 60% (15% each)
+    const rTotal = ((r.respect||0) + (r.integrity||0) + (r.strength||0) + (r.effort||0));
+    const rMax = 12;
+    const rPct = rMax > 0 ? (rTotal/rMax)*100 : 0;
+    const composite = Math.round((p.percentage * 0.4) + (rPct * 0.6));
+    const isCaptain = composite >= 80 && p.percentage >= 75;
+
+    const pname = p.player_name.replace(/'/g, "\'");
+    html += `
+    <div class="coach-section roster-row">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px">
+        <div>
+          <span class="roster-name">${p.player_name}</span>
+          ${isCaptain ? '<span class="captain-badge">&#9733; Captain candidate</span>' : ''}
+          <span class="attempt-chip">${attempts} attempt${attempts!==1?'s':''}</span>
+        </div>
+        <span class="roster-score ${scoreClass}">${scoreLabel} — ${p.percentage}%</span>
+      </div>
+      <div class="roster-pos">${p.position} &mdash; ${new Date(p.taken_at).toLocaleDateString()}</div>
+      <div class="rise-grid">
+        <div class="rise-item"><label>Respect</label><select class="rise-select" id="r-${pname}" onchange="saveRise('${pname}')"><option value="0" ${!r.respect?'selected':''}>—</option><option value="1" ${r.respect==1?'selected':''}>1</option><option value="2" ${r.respect==2?'selected':''}>2</option><option value="3" ${r.respect==3?'selected':''}>3</option></select></div>
+        <div class="rise-item"><label>Integrity</label><select class="rise-select" id="i-${pname}" onchange="saveRise('${pname}')"><option value="0" ${!r.integrity?'selected':''}>—</option><option value="1" ${r.integrity==1?'selected':''}>1</option><option value="2" ${r.integrity==2?'selected':''}>2</option><option value="3" ${r.integrity==3?'selected':''}>3</option></select></div>
+        <div class="rise-item"><label>Strength</label><select class="rise-select" id="s-${pname}" onchange="saveRise('${pname}')"><option value="0" ${!r.strength?'selected':''}>—</option><option value="1" ${r.strength==1?'selected':''}>1</option><option value="2" ${r.strength==2?'selected':''}>2</option><option value="3" ${r.strength==3?'selected':''}>3</option></select></div>
+        <div class="rise-item"><label>Effort</label><select class="rise-select" id="e-${pname}" onchange="saveRise('${pname}')"><option value="0" ${!r.effort?'selected':''}>—</option><option value="1" ${r.effort==1?'selected':''}>1</option><option value="2" ${r.effort==2?'selected':''}>2</option><option value="3" ${r.effort==3?'selected':''}>3</option></select></div>
+      </div>
+      ${composite > 0 ? `<div style="font-size:12px;color:#888">Composite score: <strong style="color:#1a1a2e">${composite}%</strong> (Quiz 40% + R.I.S.E. 60%)</div>` : ''}
+      <textarea class="notes-input" id="n-${pname}" rows="2" placeholder="Coach notes...">${r.notes||''}</textarea>
+      <button class="save-btn" onclick="saveRise('${pname}')">Save</button>
+    </div>`;
+  });
+
+  document.getElementById('coach-roster').innerHTML = html || '<div class="dashboard-empty">No results yet.</div>';
+}
+
+async function saveRise(name){
+  const r = document.getElementById('r-'+name)?.value||0;
+  const i = document.getElementById('i-'+name)?.value||0;
+  const s = document.getElementById('s-'+name)?.value||0;
+  const e = document.getElementById('e-'+name)?.value||0;
+  const n = document.getElementById('n-'+name)?.value||'';
+  
+  // Upsert
+  await sbFetch('/rest/v1/rise_ratings', 'POST', {
+    player_name: name,
+    respect: parseInt(r),
+    integrity: parseInt(i),
+    strength: parseInt(s),
+    effort: parseInt(e),
+    notes: n,
+    updated_at: new Date().toISOString()
+  }, true);
+  // Reload to update composite
+  loadDashboard();
+}
+
 document.addEventListener('DOMContentLoaded',function(){checkExpiry();});
 </script>
+
+<div id="screen-coach" class="screen">
+  <div style="padding-top:1rem">
+    <div class="header" style="display:flex;align-items:center;justify-content:space-between">
+      <div><h1>Coach Dashboard</h1><p>Stivers Soccer — Captain Tracker</p></div>
+    </div>
+    <div class="summary-grid" id="summary-grid">
+      <div class="summary-card"><div class="num" id="sum-total">—</div><div class="lbl">Players</div></div>
+      <div class="summary-card"><div class="num" id="sum-passed">—</div><div class="lbl">Passed</div></div>
+      <div class="summary-card"><div class="num" id="sum-avg">—</div><div class="lbl">Avg Score</div></div>
+    </div>
+    <div id="coach-roster"></div>
+    <button class="btn btn-outline" style="margin-top:8px;margin-bottom:2rem" onclick="showScreen('screen-home')">Back to home</button>
+  </div>
+</div>
+
 </body>
 </html>
