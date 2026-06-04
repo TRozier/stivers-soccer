@@ -52,8 +52,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .badge-gold{background:#FAEEDA;color:#633806}
 .badge-green{background:#E1F5EE;color:#085041}
 .badge-red{background:#FCEBEB;color:#791F1F}
-.consequence{background:#FCEBEB;border-radius:10px;padding:14px;margin:12px 0;border:1.5px solid #F09595}
-.consequence p{font-size:14px;color:#791F1F;font-weight:600;line-height:1.5}
 .result-breakdown{margin-top:1rem}
 .breakdown-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid #eee;font-size:14px}
 .breakdown-row:last-child{border-bottom:none}
@@ -224,7 +222,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     </div>
     <div id="result-badge"></div>
     <div id="result-msg" class="card" style="text-align:left"></div>
-    <div id="consequence-box" class="consequence" style="display:none"><p id="consequence-text"></p></div>
     <div class="result-breakdown card" id="result-breakdown"></div>
     <button class="btn btn-outline" style="margin-top:1rem" onclick="goToName()">Retake quiz</button>
     <button class="btn btn-outline" style="margin-top:8px;margin-bottom:2rem" onclick="showScreen('screen-home')">Home</button>
@@ -497,21 +494,19 @@ function showResult(){
   document.getElementById('result-fraction').textContent=score+' / '+quizQs.length+' correct';
   const badge=document.getElementById('result-badge');
   const msg=document.getElementById('result-msg');
-  const cons=document.getElementById('consequence-box');
-  const consText=document.getElementById('consequence-text');
+
   if(pct===100){
     badge.innerHTML='<span class="badge badge-gold">Elite &#x2014; 100% &#x1F3C6;</span>';
-    msg.innerHTML='<p style="font-size:14px;line-height:1.7">Perfect score. You know the system inside out. Now show it on the pitch.</p>';
-    cons.style.display='none';
+    msg.innerHTML='<p style="font-size:14px;line-height:1.7">100%. The Soccer Gods are pleased — and they do not give that easily. They blessed you with the knowledge of this game for a reason. Now go carry it onto the pitch and make it worth their gift.</p>';
+
   } else if(passed){
     badge.innerHTML='<span class="badge badge-green">Passed &#x2014; '+pct+'%</span>';
-    msg.innerHTML='<p style="font-size:14px;line-height:1.7">Good work. Go back and lock in the questions you missed before the season starts.</p>';
-    cons.style.display='none';
+    msg.innerHTML='<p style="font-size:14px;line-height:1.7">The Gods are nodding. You know the system — now go back and tighten up the spots you left on the table. They rewarded you with this knowledge for a reason. Don't waste it.</p>';
+
   } else {
     badge.innerHTML='<span class="badge badge-red">Failed &#x2014; '+pct+'%</span>';
-    msg.innerHTML='<p style="font-size:14px;line-height:1.7">You need to study the game model again. Retake and pass before next session.</p>';
-    cons.style.display='block';
-    consText.textContent='You owe Coach: '+(pct<50?'20':'10')+' suicides at the next session. Study the game model, retake the quiz, pass it. No shortcuts.';
+    msg.innerHTML='<p style="font-size:14px;line-height:1.7">The Gods are not pleased — and you already know that. They gave you the gift. Now go honor it. Study the material, lock it in, and come back and show them what you're made of.</p>';
+
   }
   let bh='<h2 style="font-size:13px;font-weight:700;margin-bottom:8px">Question breakdown</h2>';
   results.forEach((r,i)=>{
