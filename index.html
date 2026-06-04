@@ -423,7 +423,22 @@ function confirmName(){
   // 4 from other positions, weighted: 3 prox, 1 far (or all prox if no far)
   const picked3Prox=[...proxQs].sort(()=>Math.random()-0.5).slice(0,3);
   const picked1Far=[...farQs].sort(()=>Math.random()-0.5).slice(0,1);
-  const picked4Other=[...picked3Prox,...picked1Far].sort(()=>Math.random()-0.5).slice(0,4);
+  let picked4Other=[...picked3Prox,...picked1Far].sort(()=>Math.random()-0.5).slice(0,4);
+  // If we still dont have 4, fill from any remaining questions
+  if(picked4Other.length < 4){
+    const usedIds=new Set([...picked6Principles,...picked10Pos,...picked4Other].map((_,i)=>i));
+    const allOther=[...proxQs,...farQs].sort(()=>Math.random()-0.5);
+    for(const q of allOther){
+      if(picked4Other.length>=4) break;
+      if(!picked4Other.includes(q)) picked4Other.push(q);
+    }
+  }
+  // Final guarantee: if still short, pull from any question not already picked
+  const allPicked=new Set([...picked6Principles,...picked10Pos,...picked4Other]);
+  const remaining=ALL_QUESTIONS.filter(q=>!allPicked.has(q)&&q.pos!==pos&&q.pos!=='Principles');
+  while(picked4Other.length<4 && remaining.length>0){
+    picked4Other.push(remaining.splice(Math.floor(Math.random()*remaining.length),1)[0]);
+  }
   quizQs=[...picked6Principles,...picked10Pos,...picked4Other].sort(()=>Math.random()-0.5);
   currentQ=0;score=0;results=[];
   showScreen('screen-quiz');
@@ -545,7 +560,7 @@ async function saveQuizResult(name, position, score, total, pct){
   try {
     const existing = await sbFetch('/rest/v1/quiz_results?player_name=eq.'+encodeURIComponent(name)+'&select=id');
     const attempt = Array.isArray(existing) ? existing.length + 1 : 1;
-    const result = await sbFetch('/rest/v1/quiz_results', 'POST', {
+    await sbFetch('/rest/v1/quiz_results', 'POST', {
       player_name: name,
       position: position,
       score: score,
@@ -553,12 +568,8 @@ async function saveQuizResult(name, position, score, total, pct){
       percentage: pct,
       attempt: attempt
     });
-    console.log('Save result:', JSON.stringify(result));
-    if(result && result.code) {
-      alert('Save error: ' + result.message + ' (code: ' + result.code + ')');
-    }
   } catch(e) {
-    alert('Connection error: ' + e.message);
+    console.error('Save error:', e);
   }
 }
 
