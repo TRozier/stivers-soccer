@@ -1,2 +1,2 @@
 # stivers-soccer
-Repository for Stivers Tings
+This repo is used for Stivers Varsity Soccer Team Tactics
