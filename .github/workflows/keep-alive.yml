@@ -1,0 +1,17 @@
+name: Supabase Keep-Alive
+
+on:
+  schedule:
+    - cron: '0 9 */3 * *'
+  workflow_dispatch: {}
+
+jobs:
+  ping-supabase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase to prevent auto-pause
+        run: |
+          curl -s -o /dev/null -w "%{http_code}" \
+            "https://ypezbqnhpklppspkzrrn.supabase.co/rest/v1/game_model_visits?select=id&limit=1" \
+            -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlwZXpicW5ocGtscHBzcGt6cnJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1Mjc2NTMsImV4cCI6MjA5NjEwMzY1M30.K06pKjoqBAEbHi7SM_jyXMrRlppBTguf1l4lytJODoc" \
+            -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlwZXpicW5ocGtscHBzcGt6cnJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1Mjc2NTMsImV4cCI6MjA5NjEwMzY1M30.K06pKjoqBAEbHi7SM_jyXMrRlppBTguf1l4lytJODoc"
