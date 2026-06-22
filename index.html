@@ -488,19 +488,52 @@ function answerMC(idx){
   showFeedback(correct,q.opts[q.ans]);
 }
 
-function answerFill(){
+async function answerFill(){
   if(answered)return;
   const input=document.getElementById('fill-ans');
-  const val=input.value.toLowerCase().trim();
+  const val=input.value.trim();
   if(!val){alert('Type an answer first.');return;}
   const q=quizQs[currentQ];
-  const hits=q.keywords.filter(k=>val.includes(k)).length;
-  const correct=hits>=Math.ceil(q.keywords.length*0.50);
+
+  // Show loading state
+  const btn=document.querySelector('#screen-quiz .btn-primary');
+  if(btn){btn.disabled=true;btn.textContent='Grading...';}
+  input.disabled=true;
+
+  let correct=false;
+  try {
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:100,
+        messages:[{
+          role:'user',
+          content:`You are grading a soccer tactics quiz for a high school varsity player.
+
+Question: "${q.q}"
+Correct concept: "${q.ans}"
+Player's answer: "${val}"
+
+Does the player's answer demonstrate understanding of the correct concept, even if worded differently? Be generous — if the core idea is there, it's correct. Respond with ONLY the word CORRECT or INCORRECT, nothing else.`
+        }]
+      })
+    });
+    const data=await res.json();
+    const verdict=data.content?.[0]?.text?.trim().toUpperCase();
+    correct=(verdict==='CORRECT');
+  } catch(e){
+    // Fallback to keyword check if API fails
+    const hits=q.keywords.filter(k=>val.toLowerCase().includes(k)).length;
+    correct=hits>=Math.ceil(q.keywords.length*0.50);
+  }
+
   if(correct)score++;
   answered=true;
-  input.disabled=true;
   results.push({q:q.q,correct,pos:q.pos});
   showFeedback(correct,q.ans);
+  if(btn){btn.disabled=false;btn.textContent='Submit answer';}
 }
 
 function showFeedback(correct,correctAns){
