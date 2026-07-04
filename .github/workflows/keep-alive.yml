@@ -2,8 +2,7 @@ name: Supabase Keep-Alive
 
 on:
   schedule:
-    # Runs every day at 9:00 AM UTC — daily instead of every 3 days,
-    # so a bad month-boundary gap (e.g. Jan 31 -> Mar 1) can't sneak past the 7-day pause window
+    # Runs daily at 9:00 AM UTC
     - cron: '0 9 * * *'
   workflow_dispatch: {}  # lets you trigger it manually from the Actions tab anytime
 
@@ -13,10 +12,19 @@ jobs:
     steps:
       - name: Ping Supabase to prevent auto-pause
         run: |
-          curl --fail -s -o response.txt -w "HTTP status: %{http_code}\n" \
+          HTTP_CODE=$(curl -s -o response.txt -w "%{http_code}" \
             "https://ypezbqnhpklppspkzrrn.supabase.co/rest/v1/game_model_visits?select=id&limit=1" \
             -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlwZXpicW5ocGtscHBzcGt6cnJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1Mjc2NTMsImV4cCI6MjA5NjEwMzY1M30.K06pKjoqBAEbHi7SM_jyXMrRlppBTguf1l4lytJODoc" \
-            -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlwZXpicW5ocGtscHBzcGt6cnJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1Mjc2NTMsImV4cCI6MjA5NjEwMzY1M30.K06pKjoqBAEbHi7SM_jyXMrRlppBTguf1l4lytJODoc" \
-          || (echo "PING FAILED — response body was:" && cat response.txt && exit 1)
-          echo "Ping succeeded — response body:"
+            -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlwZXpicW5ocGtscHBzcGt6cnJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1Mjc2NTMsImV4cCI6MjA5NjEwMzY1M30.K06pKjoqBAEbHi7SM_jyXMrRlppBTguf1l4lytJODoc")
+
+          echo "HTTP status: $HTTP_CODE"
+          echo "Response body:"
           cat response.txt
+          echo ""
+
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
+            echo "PING FAILED with status $HTTP_CODE — see response body above"
+            exit 1
+          fi
+
+          echo "Ping succeeded."
