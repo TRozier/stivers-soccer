@@ -551,7 +551,7 @@ function nextQuestion(){
 
 function showResult(){
   const pct=Math.round((score/quizQs.length)*100);
-  saveQuizResult(playerName, playerPosition, score, quizQs.length, pct).catch(console.error);
+  saveQuizResult(playerName, playerPosition, score, quizQs.length, pct, results).catch(console.error);
   const passed=pct>=75;
   document.getElementById('result-name-header').textContent=playerName+' — '+playerPosition;
   document.getElementById('result-pct').textContent=pct+'%';
@@ -599,7 +599,7 @@ async function sbFetch(path, method='GET', body=null, upsert=false){
   try { return await res.json(); } catch(e) { return null; }
 }
 
-async function saveQuizResult(name, position, score, total, pct){
+async function saveQuizResult(name, position, score, total, pct, questionResults){
   try {
     const existing = await sbFetch('/rest/v1/quiz_results?player_name=eq.'+encodeURIComponent(name)+'&select=id');
     const attempt = Array.isArray(existing) ? existing.length + 1 : 1;
@@ -611,6 +611,18 @@ async function saveQuizResult(name, position, score, total, pct){
       percentage: pct,
       attempt: attempt
     });
+
+    if(Array.isArray(questionResults) && questionResults.length){
+      const rows = questionResults.map(r => ({
+        player_name: name,
+        position: position,
+        attempt: attempt,
+        question: r.q,
+        question_position: r.pos,
+        correct: r.correct
+      }));
+      await sbFetch('/rest/v1/quiz_answers', 'POST', rows);
+    }
   } catch(e) {
     console.error('Save error:', e);
   }
@@ -620,10 +632,41 @@ async function loadDashboard(){
   // Load quiz results - get latest per player
   const results = await sbFetch('/rest/v1/quiz_results?select=*&order=taken_at.desc');
   const rise = await sbFetch('/rest/v1/rise_ratings?select=*');
+  const answers = await sbFetch('/rest/v1/quiz_answers?select=*');
 
   if(!Array.isArray(results)){ 
     document.getElementById('coach-roster').innerHTML='<div class="dashboard-empty">No quiz results yet.</div>';
     return;
+  }
+
+  // Group answers by player_name + attempt so we can pull each player's LATEST attempt only
+  const answersMap = {};
+  if(Array.isArray(answers)){
+    answers.forEach(a => {
+      const key = a.player_name + '|' + a.attempt;
+      if(!answersMap[key]) answersMap[key] = [];
+      answersMap[key].push(a);
+    });
+  }
+
+  // Team-wide weak spots: misses across every player's LATEST attempt, grouped by question position
+  const missTally = {};
+  const seenPlayerLatest = {};
+  results.forEach(r => { if(!seenPlayerLatest[r.player_name]) seenPlayerLatest[r.player_name] = r.attempt; });
+  if(Array.isArray(answers)){
+    answers.forEach(a => {
+      if(seenPlayerLatest[a.player_name] === a.attempt && !a.correct){
+        missTally[a.question_position] = (missTally[a.question_position]||0) + 1;
+      }
+    });
+  }
+  const weakSpots = Object.entries(missTally).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  let weakSpotsHtml = '';
+  if(weakSpots.length){
+    weakSpotsHtml = `<div class="coach-section" style="margin-bottom:12px">
+      <h3 style="font-size:13px;font-weight:700;margin-bottom:8px">Team weak spots (most missed, latest attempts)</h3>
+      ${weakSpots.map(([pos,count]) => `<div class="breakdown-row"><span style="flex:1;font-size:13px;color:#444">${pos}</span><span style="font-size:13px;color:#791F1F;font-weight:600">${count} miss${count!==1?'es':''}</span></div>`).join('')}
+    </div>`;
   }
 
   // Get latest result per player
@@ -663,6 +706,18 @@ async function loadDashboard(){
     const isCaptain = composite >= 80 && p.percentage >= 75;
 
     const pname = p.player_name.replace(/'/g, "\'");
+    const missedRows = (answersMap[p.player_name+'|'+p.attempt]||[]).filter(a=>!a.correct);
+    const missedId = 'missed-'+pname.replace(/[^a-zA-Z0-9]/g,'_');
+    const missedHtml = missedRows.length
+      ? `<div style="margin-top:6px">
+           <button class="save-btn" style="background:#791F1F" onclick="document.getElementById('${missedId}').style.display=document.getElementById('${missedId}').style.display==='none'?'block':'none'">
+             Missed questions (${missedRows.length})
+           </button>
+           <div id="${missedId}" style="display:none;margin-top:6px">
+             ${missedRows.map(a => `<div class="breakdown-row"><span style="flex:1;font-size:12px;color:#444;padding-right:8px">[${a.question_position}] ${a.question}</span><span class="wrong-dot">&#x2717;</span></div>`).join('')}
+           </div>
+         </div>`
+      : '';
     html += `
     <div class="coach-section roster-row">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px">
@@ -674,6 +729,7 @@ async function loadDashboard(){
         <span class="roster-score ${scoreClass}">${scoreLabel} — ${p.percentage}%</span>
       </div>
       <div class="roster-pos">${p.position} &mdash; ${new Date(p.taken_at).toLocaleDateString()}</div>
+      ${missedHtml}
       <div class="rise-grid">
         <div class="rise-item"><label>Respect</label><select class="rise-select" id="r-${pname}" onchange="saveRise('${pname}')"><option value="0" ${!r.respect?'selected':''}>—</option><option value="1" ${r.respect==1?'selected':''}>1</option><option value="2" ${r.respect==2?'selected':''}>2</option><option value="3" ${r.respect==3?'selected':''}>3</option></select></div>
         <div class="rise-item"><label>Integrity</label><select class="rise-select" id="i-${pname}" onchange="saveRise('${pname}')"><option value="0" ${!r.integrity?'selected':''}>—</option><option value="1" ${r.integrity==1?'selected':''}>1</option><option value="2" ${r.integrity==2?'selected':''}>2</option><option value="3" ${r.integrity==3?'selected':''}>3</option></select></div>
@@ -686,7 +742,7 @@ async function loadDashboard(){
     </div>`;
   });
 
-  document.getElementById('coach-roster').innerHTML = html || '<div class="dashboard-empty">No results yet.</div>';
+  document.getElementById('coach-roster').innerHTML = weakSpotsHtml + (html || '<div class="dashboard-empty">No results yet.</div>');
 
   // Load site visit activity
   loadVisitActivity();
